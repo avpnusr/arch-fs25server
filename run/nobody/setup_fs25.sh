@@ -92,7 +92,26 @@ if [ -f ~/.fs25server/drive_c/Program\ Files\ \(x86\)/Farming\ Simulator\ 2025/F
 then
     echo -e "${GREEN}INFO: Game already installed, we can skip the installer!${NOCOLOR}"
 else
-    wine "/opt/fs25/installer/FarmingSimulator2025.exe"
+    screen -dmS FSInstall wine "/opt/fs25/installer/FarmingSimulator2025.exe"
+    sleep 15
+    xdotool key --delay 250 Tab Up space Tab Return Tab Tab Return Return
+    WINDOWID=$(xdotool getactivewindow)
+    INSTPID=$(xdotool getwindowpid $WINDOWID)
+    COUNT=0
+    while true; do
+       INSTLOAD=$(top -p ${INSTPID} -bn1 | sed 1,7d | awk '{print $9}' | cut -d. -f1)
+           if [ "$INSTLOAD" -le 85 ]; then
+            COUNT=$((COUNT+1))
+               if [ $COUNT -gt 9 ]; then
+               xdotool key Return
+               sleep 10
+               break
+               fi 
+           else 
+           COUNT=0
+           fi
+    sleep 2
+    done
 fi
 
 # Cleanup Desktop
@@ -169,7 +188,19 @@ fi
 # Check for updates
 
 echo -e "${YELLOW}INFO: Checking for updates, if you get warning about gpu drivers make sure to click no!${NOCOLOR}"
-wine ~/.fs25server/drive_c/Program\ Files\ \(x86\)/Farming\ Simulator\ 2025/FarmingSimulator2025.exe
+if [ -z $LICENSEKEY ]; then
+echo -e "${RED}ERROR: LicenseKey is not set as a container environment variable, auto-install will not work and exit now!${NOCOLOR}"
+exit 1
+fi
+screen -dmS LICINSTALL wine ~/.fs25server/drive_c/Program\ Files\ \(x86\)/Farming\ Simulator\ 2025/FarmingSimulator2025.exe
+sleep 15
+xdotool type --delay 100 $LICENSEKEY
+sleep 2
+xdotool key Return
+sleep 120
+xdotool key --delay 250 Tab Return
+sleep 10
+xdotool key --delay 250 Tab Return
 
 # Check config if not exist exit
 
